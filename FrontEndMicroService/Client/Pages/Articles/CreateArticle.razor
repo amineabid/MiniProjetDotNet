@@ -1,0 +1,30 @@
+﻿<h3>CreateArticle</h3>
+
+
+<RadzenTemplateForm Data="@article" Submit="@((Article args) => { Submit(args); })">
+
+<RadzenFieldset Text="Purchase Info">
+        <RadzenTextBox style="width: 100%;" Name="Id" />
+    <div class="row">
+        <div class="col-md-12 align-items-center d-flex">
+            <RadzenLabel Text="Nom Artcile" />
+        </div>
+        <div class="col-md-8">
+            <RadzenTextBox style="width: 100%;" Name="Name" />
+        </div>
+    </div>
+</RadzenFieldset>
+</RadzenTemplateForm>
+@code {
+    [Parameter]
+    public Article article { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        article = new Article();
+    }
+    void Submit(Article arg)
+    {
+        //
+    }
+}

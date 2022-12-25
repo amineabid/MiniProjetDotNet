@@ -1,0 +1,76 @@
+﻿@page "/articles"
+@inject IArticlesService api
+@inject DialogService DialogService
+@implements IDisposable
+@using Microsoft.AspNetCore.Components.Web
+
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Articles</RadzenText>
+    <a href="javascript:void(0);" class="btn btn-primary" Click="@OpenArticle(0)">Création</a>
+</RadzenCard>
+@*<RadzenGrid Data="@lsArticle" TItem="Customer">
+    <RadzenGridColumn Property="Name" Title="Name" />
+    <RadzenGridColumn Property="Email" Title="Email" />
+</RadzenGrid>*@
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id Article</th>
+            <th>Name Article</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in lsArticle)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Name</td>
+                <td>
+                    <a href="javascript:void(0);" class="btn btn-primary" Click="@OpenArticle(item.Id)">Modifier</a>
+                    <a href="javascript:void(0);" class="btn btn-primary" Click="@OpenArticle(item.Id)">Supprimer</a>
+                    <a href="javascript:void(0);" class="btn btn-primary" Click="@OpenArticle(item.Id)">Creation Piéce</a>
+                    <a href="javascript:void(0);" class="btn btn-primary" Click="@OpenArticle(item.Id)">Liste Piéce</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Article> lsArticle = new List<Article>();
+    private bool showDialog = false;
+    protected override async Task OnInitializedAsync()
+    {
+        lsArticle = await api.GetAll();
+        if (lsArticle == null)
+        {
+            //erreur
+            lsArticle = new List<Article>();
+        }
+
+    }
+    public void Dispose()
+    {
+        // The DialogService is a singleton so it is advisable to unsubscribe.
+        DialogService.OnOpen -= Open;
+        DialogService.OnClose -= Close;
+    }
+
+    void Open(string title, Type type, Dictionary<string, object> parameters, DialogOptions options)
+    {
+        Console.WriteLine("Dialog opened");
+    }
+
+    void Close(dynamic result)
+    {
+        Console.WriteLine($"Dialog closed");
+    }
+    public async Task OpenArticle(int id)
+    {
+        await DialogService.OpenAsync<CreateArticle>($"Artcile ",
+               new Dictionary<string, object>() { { "article", new Article() } },
+               new DialogOptions() { Width = "700px", Height = "512px", Resizable = true, Draggable = true });
+    }
+
+}
