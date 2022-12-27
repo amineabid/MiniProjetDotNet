@@ -1,0 +1,197 @@
+﻿@inject IArticlesService api
+@inject IDialogService DialogService
+@inject ISnackbar snackBar
+<MudDialog>
+    <DialogContent>
+        
+            <MudTable ServerData="@(new Func<TableState, Task<TableData<Piece>>>(ServerReload))"
+                      FixedHeader="true"
+                      Elevation="25"
+                      MultiSelection="false"
+                      @ref="table"
+                      @bind-customer="article"
+                      SortLabel="Sort By"
+                      Height="@("400px")"
+            >
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Piéces</MudText>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled"
+                               Disabled="false"
+                               Color="Color.Primary"
+                               OnClick="@((e) => Save())">
+                        Ajouter Piéce
+                    </MudButton>
+                    <MudSpacer />
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearchValue(s))" Placeholder="Recherche Clients..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+
+                </ToolBarContent>
+                <ColGroup>
+
+                    <col style="width: 20%;" />
+                    <col style="width: 40%;" />
+                    <col style="width: 20%;" />
+                    <col style="width: 20%;" />
+                </ColGroup>
+
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Piece, object>(x=>x.Id)">Numero Piéce</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Piece, object>(x=>x.Name)">Nom</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Piece, object>(x=>x.price)">Prix</MudTableSortLabel></MudTh>
+                    <MudTh></MudTh>
+
+
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Nr">@context.Id</MudTd>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Name">@context.price</MudTd>
+                    <MudTd DataLabel="">
+                        <MudFab Disabled="false" @onclick="@((e)=>Edit(@context.Id))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
+                        <MudFab @onclick="@((e)=>Delete(@context.Id))" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+                    </MudTd>
+
+                </RowTemplate>
+            </MudTable>
+        
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Fermer</MudButton>
+
+        @*<MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit">Sauvegarder Article</MudButton>*@
+
+
+    </DialogActions>
+</MudDialog>
+
+
+
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    private List<Piece> lsArticle = new List<Piece>();
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private MudTable<Piece> table;
+
+    private bool showDialog = false;
+    private bool _hidePosition;
+    private bool _loading;
+    private string searchString1 = "";
+    int totalItems = 0;
+    [Parameter]
+    public int ArtcileId { get; set; }
+
+    void Cancel() => MudDialog.Cancel();
+
+    private async Task<TableData<Piece>> ServerReload(TableState state)
+    {
+        lsArticle = await api.GetPiecesArtciles(ArtcileId);
+        //await Task.Delay(300);
+        FilterCustmers();
+        totalItems = lsArticle.Count();
+
+        //clients = clients.Skip(state.Page * state.PageSize).Take(state.PageSize).ToList();
+        return new TableData<Piece>() { TotalItems = totalItems, Items = lsArticle };
+    }
+    private async void FilterCustmers()
+    {
+        if (!string.IsNullOrWhiteSpace(searchString1))
+        {
+            lsArticle = lsArticle.AsParallel().Where(a =>
+                   (a.Name != null ? a.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+                || (a.Id != 0 ? a.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+            ).ToList();
+        }
+
+
+
+    }
+
+    private void OnSearchValue(string text)
+    {
+        searchString1 = text;
+        table.ReloadServerData();
+    }
+
+    Piece article = new Piece();
+    private async void Save()
+    {
+        var parameters = new DialogParameters();
+
+        article = new Piece();
+        article.ArticleId = ArtcileId;
+        parameters.Add("article", article);
+        var dialog = DialogService.Show<CreatePiece>("Ajouter Piece", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (string.IsNullOrEmpty(article.Name))
+            {
+                snackBar.Add("Les champs : Nom sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await api.CreatePiece(article);
+                article = new Piece();
+                snackBar.Add("Piece Ajoutée.", Severity.Success);
+                await table.ReloadServerData();
+
+            }
+
+            StateHasChanged();
+        }
+
+    }
+
+    private async void Edit(int id)
+    {
+        article = lsArticle.FirstOrDefault(c => c.Id == id);
+        var parameters = new DialogParameters();
+
+
+        parameters.Add("article", article);
+
+        article.ArticleId = ArtcileId;
+        var dialog = DialogService.Show<CreatePiece>("Modifier Piéce", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (article.Id == 0 || string.IsNullOrEmpty(article.Name))
+            {
+                snackBar.Add("Les champs : Nom Artcile sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await api.EditPiece(article);
+                article = new Piece();
+                snackBar.Add("Artcile Modifé.", Severity.Success);
+                await table.ReloadServerData();
+            }
+
+            StateHasChanged();
+        }
+    }
+    private async void Delete(int id)
+    {
+
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Supprimer Piéce",
+            yesText: "Supprimer!", cancelText: "Annuler");
+        if (result == null)
+        {
+            snackBar.Add("Annulée " + "La Supprission piéce .", Severity.Warning);
+        }
+        else
+        {
+            await api.DeletePiece(id);
+            snackBar.Add("Piece Supprimée.", Severity.Success);
+
+        }
+        await table.ReloadServerData();
+        StateHasChanged();
+
+    }
+
+}

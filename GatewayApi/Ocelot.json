@@ -22,7 +22,31 @@
         }
       ],
       "UpstreamPathTemplate": "/apigateway/Articles/{id}",
-      "UpstreamHttpMethod": [ "Get", "Post" ]
+      "UpstreamHttpMethod": [ "Get", "PUT", "Delete", "Post" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/Pieces",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7011
+        }
+      ],
+      "UpstreamPathTemplate": "/apigateway/Pieces",
+      "UpstreamHttpMethod": [ "GET", "PUT", "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/Pieces/{id}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7011
+        }
+      ],
+      "UpstreamPathTemplate": "/apigateway/Pieces/{id}",
+      "UpstreamHttpMethod": [ "Get", "PUT", "Delete", "Post" ]
     },
     {
       "DownstreamPathTemplate": "/api/Reclamations",

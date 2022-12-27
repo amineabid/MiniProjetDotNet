@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Net.Http;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,7 +13,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Radzen;
+using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -24,10 +23,7 @@ builder.Services.AddScoped<IArticlesService, ArticlesService>();
 builder.Services.AddScoped<IReclamationsService, ReclamationsService>();
 builder.Services.AddScoped<IInterventionsService, InterventionsService>();
 
-builder.Services.AddScoped<DialogService>();
-builder.Services.AddScoped<NotificationService>();
-builder.Services.AddScoped<TooltipService>();
-builder.Services.AddScoped<ContextMenuService>();
+builder.Services.AddMudServices();
 
 builder.Services.AddScoped(sp => 
     new HttpClient { 

@@ -38,5 +38,33 @@ namespace FrontEndMicroService.Client.API
                 throw new InvalidOperationException();
             }
         }
+        public async Task<Intervention> Edit(Intervention Article)
+        {
+            var response = await _httpClient.PutAsJsonAsync(GatewayApiGetURL + "/" + Article.Id, Article);
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                return Article;
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
+        public async Task<Intervention> Delete(int id)
+        {
+            var response = await _httpClient.DeleteAsync(GatewayApiGetURL + "/" + id);
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                return new Article { Id = id, Name = "" };
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
     }
 }

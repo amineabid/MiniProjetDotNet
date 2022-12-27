@@ -9,6 +9,8 @@ namespace FrontEndMicroService.Client.API
     {
         public Task<List<Intervention>> GetAll();
         public Task<Intervention> Create(Intervention Article);
+        public Task<Intervention> Edit(Intervention Article);
+        public Task<Intervention> Delete(int id);
 
     }
 }

@@ -30,6 +30,12 @@ namespace ArticleApi.Controllers
         {
             return await _context.Article.ToListAsync();
         }
+        // GET: api/Pieces/{ArticleId}
+        [HttpGet("Pieces/{idArtcile}")]
+        public async Task<ActionResult<IEnumerable<Piece>>> GetPieceByArticle(int idArtcile)
+        {
+            return await _context.Piece.Where(a=>a.ArticleId== idArtcile).ToListAsync();
+        }
 
         // GET: api/Articles/5
         [HttpGet("{id}")]

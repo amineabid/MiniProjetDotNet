@@ -5,6 +5,8 @@
         <MudForm Model="@article" @ref="@form" ValidationDelay="0">
             <MudCardContent Class="pa-0">
                 <MudTextField Class="d-none" @bind-Value="article.Id" For="@(() => article.Id)" Immediate="true" Label="Id" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+                <MudTextField Class="d-none" @bind-Value="article.ArticleId" For="@(() => article.Id)" Immediate="true" Label="Id" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+                <MudNumericField Immediate="false"  Format="N2"  T="double" HelperText="@article.price.ToString()" @bind-Value="article.price" Label="Prix" Variant="Variant.Outlined" Margin="Margin.Normal"></MudNumericField>
                 <MudTextField @bind-Value="article.Name" Label="Titre" Variant="Variant.Outlined" Margin="Margin.Normal"></MudTextField>
 
             </MudCardContent>
@@ -15,7 +17,7 @@
     <DialogActions>
         <MudButton OnClick="Cancel">Annuler</MudButton>
 
-        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit">Sauvegarder Article</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit">Sauvegarder Piéce</MudButton>
 
 
     </DialogActions>
@@ -28,7 +30,7 @@
     [CascadingParameter] MudDialogInstance MudDialog { get; set; }
     MudForm form;
     [Parameter]
-    public Article article { get; set; }
+    public Piece article { get; set; }
 
     void Cancel() => MudDialog.Cancel();
 
