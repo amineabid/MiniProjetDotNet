@@ -18,17 +18,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMassTransit(optinos => {
-    optinos.AddConsumer<ArticleCreatedConsumer>();
+    //optinos.AddConsumer<ArticleCreatedConsumer>();
     optinos.UsingRabbitMq((context, cnf) => {
         cnf.Host(new Uri("rabbitmq://localhost:4100"), h =>
         {
             h.Username("guest");
             h.Password("guest");
         });
-        cnf.ReceiveEndpoint("event-listener", e =>
-        {
-            e.ConfigureConsumer<ArticleCreatedConsumer>(context);
-        });
+        //cnf.ReceiveEndpoint("event-listener-artcile", e =>
+        //{
+        //    e.ConfigureConsumer<ArticleCreatedConsumer>(context);
+        //});
     });
 });
 

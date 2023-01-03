@@ -1,0 +1,198 @@
+﻿@page "/articles"
+@inject IArticlesService api
+@inject IDialogService DialogService
+@inject ISnackbar snackBar
+
+    <MudTable 
+        ServerData="@(new Func<TableState, Task<TableData<Article>>>(ServerReload))"
+          FixedHeader="true"
+          Elevation="25"
+          MultiSelection="false"
+          @ref="table"
+            @bind-customer="article"
+          SortLabel="Sort By"
+          Height="@("400px")"
+        >
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Artciles</MudText>
+            <MudSpacer />
+            <MudButton 
+                Variant="Variant.Filled" 
+                Disabled="false" 
+                Color="Color.Primary"
+                OnClick="@((e) => Save())">
+                Ajouter Article
+            </MudButton>
+            <MudSpacer />
+            <MudTextField T="string" ValueChanged="@(s=>OnSearchValue(s))" Placeholder="Recherche Articles..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+
+        </ToolBarContent>
+        <ColGroup>
+
+            <col style="width: 20%;" />
+            <col style="width: 60%;" />
+            <col style="width: 20%;" />
+        </ColGroup>
+  <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<Article, object>(x=>x.Id)">Numero Article</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Article, object>(x=>x.Name)">Nom</MudTableSortLabel></MudTh>
+            <MudTh></MudTh>
+
+
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nr">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="">
+                <MudFab Disabled="false" @onclick="@((e)=>Edit(@context.Id))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
+                <MudFab @onclick="@((e)=>Delete(@context.Id))" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+                <MudFab @onclick="@((e)=>ShowPiee(@context.Id))" Color="Color.Error" Icon="@Icons.Filled.FormatListBulleted" Size="Size.Small" IconSize="Size.Small" />
+            </MudTd>
+
+        </RowTemplate>
+    </MudTable>
+
+
+
+@code {
+    private List<Article> lsArticle = new List<Article>();
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private MudTable<Article> table;
+
+    private bool showDialog = false;
+    private bool _hidePosition;
+    private bool _loading;
+    private string searchString1 = "";
+    int totalItems = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        //lsArticle = await api.GetAll();
+        //if (lsArticle == null)
+        //{
+        //    //erreur
+        //    lsArticle = new List<Article>();
+        //}
+    }
+    private async Task<TableData<Article>> ServerReload(TableState state)
+    {
+        lsArticle = await api.GetAll();
+        //await Task.Delay(300);
+        FilterCustmers();
+        totalItems = lsArticle.Count();
+        
+        //clients = clients.Skip(state.Page * state.PageSize).Take(state.PageSize).ToList();
+        return new TableData<Article>() { TotalItems = totalItems, Items = lsArticle };
+    }
+    private async void FilterCustmers()
+    {
+        if (!string.IsNullOrWhiteSpace(searchString1))
+        {
+            lsArticle = lsArticle.AsParallel().Where(a =>
+                   (a.Name != null ? a.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+                || (a.Id != 0 ? a.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+            ).ToList();
+        }
+
+
+
+    }
+
+    private void OnSearchValue(string text)
+    {
+        searchString1 = text;
+        table.ReloadServerData();
+    }
+
+    Article article = new Article();
+    private async void Save()
+    {
+        var parameters = new DialogParameters();
+
+        article = new Article();
+        parameters.Add("article", article);
+        var dialog = DialogService.Show<CreateArticle>("Ajouter Artcile", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (string.IsNullOrEmpty(article.Name))
+            {
+                snackBar.Add("Les champs : Nom sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await api.Create(article);
+                article = new Article();
+                snackBar.Add("Artcile Ajoutée.", Severity.Success);
+                await table.ReloadServerData();
+
+            }
+
+            StateHasChanged();
+        }
+
+    }
+
+    private async void Edit(int id)
+    {
+        article = lsArticle.FirstOrDefault(c => c.Id == id);
+        var parameters = new DialogParameters();
+
+
+        parameters.Add("article", article);
+        var dialog = DialogService.Show<CreateArticle>("Modifier Article", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (article.Id == 0 || string.IsNullOrEmpty(article.Name))
+            {
+                snackBar.Add("Les champs : Nom Artcile sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await api.Edit(article);
+                article = new Article();
+                snackBar.Add("Artcile Modifé.", Severity.Success);
+                await table.ReloadServerData();
+            }
+
+            StateHasChanged();
+        }
+    }
+    private async void ShowPiee(int id)
+    {
+        article = lsArticle.FirstOrDefault(c => c.Id == id);
+        var parameters = new DialogParameters();
+
+
+        parameters.Add("ArtcileId", article.Id);
+        var dialog = DialogService.Show<ListPiece>("Liste Piece de l'article " + article.Name, parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            
+        }
+    }
+    private async void Delete(int id)
+    {
+
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Supprimer Artcile",
+            yesText: "Supprimer!", cancelText: "Annuler");
+        if (result == null)
+        {
+            snackBar.Add("Annulée " + "La Supprission d'artcile .", Severity.Warning);
+        }
+        else
+        {
+            await api.Delete(id);
+            snackBar.Add("Artcile Supprimée.", Severity.Success);
+
+        }
+        await table.ReloadServerData();
+        StateHasChanged();
+
+    }
+
+
+}

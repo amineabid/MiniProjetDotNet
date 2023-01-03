@@ -1,46 +1,87 @@
 ﻿@page "/"
 @using System.Text;
-<PageTitle>Index</PageTitle>
+@using FrontEndMicroService.Client.Pages.Reclamations
+@using RabbitMQ.Client;
+@using RabbitMQ.Client.Events;
+@inject IArticlesService api
+@inject IReclamationsService apiReclamation
+@inject IDialogService DialogService
+@inject ISnackbar snackBar
+<PageTitle>Articles</PageTitle>
 <MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">
     <MudGrid>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="12" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6">
-            <MudGrid>
-                <MudItem xs="12">
-                    <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-                </MudItem>
-                <MudItem xs="12">
-                    <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-                </MudItem>
-            </MudGrid>
-        </MudItem>
-        <MudItem xs="12" sm="6">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="12" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
-        </MudItem>
+        @foreach(var art in lsArticle){
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Outlined="true">
+                    <MudCardContent>
+                        <MudText>@art.Name</MudText>
+                        @*<MudText Typo="Typo.body2">The quick, brown fox jumps over a lazy dog.</MudText>*@
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" @onclick="@((e)=>AddReclmation(@art.Id))" Color="Color.Primary">
+                               <MudFab  Color="Color.Success" Icon="@Icons.Material.Filled.AddCircle" Title="Add" Size="Size.Small" IconSize="Size.Small" /> Ajouter Réclamation
+                     </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+
     </MudGrid>
 </MudContainer>
 
 @code {
+    private List<Article> lsArticle = new List<Article>();
+    private string searchString1 = "";
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
     protected override async Task OnInitializedAsync()
     {
+        lsArticle = await api.GetAll();
+        //await Task.Delay(300);
+        FilterCustmers();
 
     }
+    private async void FilterCustmers()
+    {
+        if (!string.IsNullOrWhiteSpace(searchString1))
+        {
+            lsArticle = lsArticle.AsParallel().Where(a =>
+                   (a.Name != null ? a.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+                || (a.Id != 0 ? a.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+            ).ToList();
+        }
 
+
+
+    }
+    Reclamation Reclamation = new Reclamation();
+    List<Article> artciles = new List<Article>();
+    private async void AddReclmation(int idArtcile)
+    {
+        var parameters = new DialogParameters();
+
+        Reclamation = new Reclamation();
+        Reclamation.ArticleId = idArtcile;
+        parameters.Add("Reclamation", Reclamation);
+        //parameters.Add("artciles", lsArticle.FirstOrDefault(a=>a.Id==idArtcile));
+        var dialog = DialogService.Show<CreateReclamation>("Ajouter Reclamation", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (string.IsNullOrEmpty(Reclamation.Name) || string.IsNullOrEmpty(Reclamation.Email) || string.IsNullOrEmpty(Reclamation.Description))
+            {
+                snackBar.Add("Les champs sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await apiReclamation.Create(Reclamation);
+                Reclamation = new Reclamation();
+                snackBar.Add("Reclamation Ajoutée.", Severity.Success);
+
+            }
+
+            StateHasChanged();
+        }
+
+    }
 }

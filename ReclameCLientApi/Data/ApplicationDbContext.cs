@@ -15,5 +15,6 @@ namespace ReclameClientApi.Data
         }
 
         public DbSet<Reclamation> Reclamation { get; set; } = default!;
+        public DbSet<Article> Article { get; set; } = default!;
     }
 }

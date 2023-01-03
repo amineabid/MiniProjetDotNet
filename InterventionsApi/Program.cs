@@ -1,8 +1,8 @@
-using ArticleApi.Consumer;
-using InterventionsApi.Data;
+
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
-
+using InterventionsApi.Consumer;
+using InterventionsApi.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -15,18 +15,36 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMassTransit(optinos => {
-    optinos.AddConsumer<InterventionCreatedConsumer>();
+    optinos.AddConsumer<ArticleCreatedConsumer>();
+    optinos.AddConsumer<ReclamationCreatedConsumer>();
     optinos.UsingRabbitMq((context, cnf) => {
         cnf.Host(new Uri("rabbitmq://localhost:4100"), h =>
         {
             h.Username("guest");
             h.Password("guest");
         });
-        cnf.ReceiveEndpoint("event-listener", e =>
+        cnf.ReceiveEndpoint("event-listener-reclamation", e =>
         {
-            e.ConfigureConsumer<InterventionCreatedConsumer>(context);
+            e.ConfigureConsumer<ReclamationCreatedConsumer>(context);
+        });
+        cnf.ReceiveEndpoint("event-listener-artcilee", e =>
+        {
+            e.ConfigureConsumer<ArticleCreatedConsumer>(context);
         });
     });
+    //optinos.AddConsumer<ArticleCreatedConsumer>();
+    //optinos.UsingRabbitMq((context, cnf) =>
+    //{
+    //    cnf.Host(new Uri("rabbitmq://localhost:4100"), h =>
+    //    {
+    //        h.Username("guest");
+    //        h.Password("guest");
+    //    });
+    //    cnf.ReceiveEndpoint("event-listener-artcile", e =>
+    //    {
+    //        e.ConfigureConsumer<ArticleCreatedConsumer>(context);
+    //    });
+    //});
 });
 var app = builder.Build();
 

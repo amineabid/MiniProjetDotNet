@@ -1,0 +1,224 @@
+﻿@page "/reclamations"
+@using FrontEndMicroService.Client.Pages.Interventions
+@inject IReclamationsService api
+@inject IInterventionsService apiIntrv
+@inject IArticlesService apiArtcile
+@inject IDialogService DialogService
+@inject ISnackbar snackBar
+
+    <MudTable 
+        ServerData="@(new Func<TableState, Task<TableData<Reclamation>>>(ServerReload))"
+          FixedHeader="true"
+          Elevation="25"
+          MultiSelection="false"
+          @ref="table"
+          @bind-customer="Reclamation"
+          SortLabel="Sort By"
+          Height="@("400px")"
+        >
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Reclamation</MudText>
+            <MudSpacer />
+            <MudButton 
+                Variant="Variant.Filled" 
+                Disabled="false" 
+                Color="Color.Primary"
+                OnClick="@((e) => Save())">
+                Ajouter Reclamation
+            </MudButton>
+            <MudSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearchValue(s))" Placeholder="Recherche Reclamation..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+
+        </ToolBarContent>
+        <ColGroup>
+
+            <col style="width: 5%;" />
+            <col style="width: 20%;" />
+            <col style="width: 20%;" />
+            <col style="width: 35%;" />
+            <col style="width: 20%;" />
+        </ColGroup>
+        <HeaderContent>
+        <MudTh><MudTableSortLabel SortBy="new Func<Reclamation, object>(x=>x.Id)">Numero Reclamation</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Reclamation, object>(x=>x.Name)">Name Client</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<Reclamation, object>(x=>x.Email)">Email Client </MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortBy="new Func<Reclamation, object>(x=>x.Description)">Description Client </MudTableSortLabel></MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nr">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Name">@context.Email</MudTd>
+        <MudTd DataLabel="Name">@context.Description</MudTd>
+            <MudTd DataLabel="">
+                <MudFab Disabled="false" @onclick="@((e)=>Edit(@context.Id))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
+                <MudFab @onclick="@((e)=>Delete(@context.Id))" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+            <MudFab @onclick="@((e)=>AddIntevesion(@context.Id))" Color="Color.Success" Icon="@Icons.Material.Filled.AddCircle" Title="Add" Size="Size.Small" IconSize="Size.Small" />
+            </MudTd>
+
+        </RowTemplate>
+    </MudTable>
+
+
+
+@code {
+    private List<Reclamation> lsReclamation = new List<Reclamation>();
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private MudTable<Reclamation> table;
+
+    private bool showDialog = false;
+    private bool _hidePosition;
+    private bool _loading;
+    private string searchString1 = "";
+    int totalItems = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        //lsIntervention = await api.GetAll();
+        //if (lsIntervention == null)
+        //{
+        //    //erreur
+        //    lsIntervention = new List<Intervention>();
+        //}
+        artciles = await apiArtcile.GetAll();
+    }
+    private async Task<TableData<Reclamation>> ServerReload(TableState state)
+    {
+        lsReclamation = await api.GetAll();
+        //await Task.Delay(300);
+        FilterCustmers();
+        totalItems = lsReclamation.Count();
+
+        //clients = clients.Skip(state.Page * state.PageSize).Take(state.PageSize).ToList();
+        return new TableData<Reclamation>() { TotalItems = totalItems, Items = lsReclamation };
+    }
+    private async void FilterCustmers()
+    {
+        if (!string.IsNullOrWhiteSpace(searchString1))
+        {
+            lsReclamation = lsReclamation.AsParallel().Where(a =>
+                   (a.Description != null ? a.Description.Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+                || (a.Id != 0 ? a.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+            ).ToList();
+        }
+
+
+
+    }
+
+    private void OnSearchValue(string text)
+    {
+        searchString1 = text;
+        table.ReloadServerData();
+    }
+
+    Reclamation Reclamation = new Reclamation();
+    List<Article> artciles = new List<Article>();
+    private async void Save()
+    {
+        var parameters = new DialogParameters();
+
+        Reclamation = new Reclamation();
+        parameters.Add("Reclamation", Reclamation);
+        parameters.Add("artciles", artciles);
+        var dialog = DialogService.Show<CreateReclamation>("Ajouter Reclamation", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (string.IsNullOrEmpty(Reclamation.Name) || string.IsNullOrEmpty(Reclamation.Email) || string.IsNullOrEmpty(Reclamation.Description) )
+            {
+                snackBar.Add("Les champs sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await api.Create(Reclamation);
+                Reclamation = new Reclamation();
+                snackBar.Add("Reclamation Ajoutée.", Severity.Success);
+                await table.ReloadServerData();
+
+            }
+
+            StateHasChanged();
+        }
+
+    }
+    Intervention intervention = new Intervention();
+    private async void AddIntevesion(int id)
+    {
+        var parameters = new DialogParameters();
+
+        intervention = new Intervention();
+        intervention.ReclamationId = id;
+        parameters.Add("Intervention", intervention);
+        var dialog = DialogService.Show<CreateIntervention>("Ajouter Intervention", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (string.IsNullOrEmpty(intervention.Description))
+            {
+                snackBar.Add("Les champs : Nom sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await apiIntrv.Create(intervention);
+                intervention = new Intervention();
+                snackBar.Add("Intervention Ajoutée.", Severity.Success);
+                await table.ReloadServerData();
+
+            }
+
+            StateHasChanged();
+        }
+
+    }
+
+    private async void Edit(int id)
+    {
+        Reclamation = lsReclamation.FirstOrDefault(c => c.Id == id);
+        var parameters = new DialogParameters();
+
+
+        parameters.Add("Reclamation", Reclamation);
+        parameters.Add("artciles", artciles);
+        var dialog = DialogService.Show<CreateReclamation>("Modifier Reclamation", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (Reclamation.Id == 0 || string.IsNullOrEmpty(Reclamation.Email) || string.IsNullOrEmpty(Reclamation.Name) || string.IsNullOrEmpty(Reclamation.Description))
+            {
+                snackBar.Add("Les champs sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await api.Edit(Reclamation);
+                Reclamation = new Reclamation();
+                snackBar.Add("Reclamation Modifé.", Severity.Success);
+                await table.ReloadServerData();
+            }
+
+            StateHasChanged();
+        }
+    }
+    private async void Delete(int id)
+    {
+
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Supprimer Reclamation",
+            yesText: "Supprimer!", cancelText: "Annuler");
+        if (result == null)
+        {
+            snackBar.Add("Annulée " + "La Supprission de la Reclamation .", Severity.Warning);
+        }
+        else
+        {
+            await api.Delete(id);
+            snackBar.Add("Reclamation Supprimée.", Severity.Success);
+
+        }
+        await table.ReloadServerData();
+        StateHasChanged();
+
+    }
+
+
+}

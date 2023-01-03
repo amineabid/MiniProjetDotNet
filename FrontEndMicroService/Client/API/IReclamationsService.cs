@@ -10,5 +10,7 @@ namespace FrontEndMicroService.Client.API
         public Task<List<Reclamation>> GetAll();
         public Task<Reclamation> Create(Reclamation Article);
 
+        public Task<Reclamation> Edit(Reclamation Article);
+        public Task<Reclamation> Delete(int id);
     }
 }

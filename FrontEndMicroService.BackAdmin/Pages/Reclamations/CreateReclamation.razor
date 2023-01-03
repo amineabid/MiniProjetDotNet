@@ -1,0 +1,55 @@
+﻿
+
+<MudDialog>
+    <DialogContent>
+        <MudForm Model="@Reclamation" @ref="@form" ValidationDelay="0">
+            <MudCardContent Class="pa-0">
+                <MudSelect T="int" Label="Article" @bind-Value="Reclamation.ArticleId" For="@(() => Reclamation.ArticleId)" Clearable="true" Required="true">
+                    @foreach (Article articl in artciles)
+                    {
+                        <MudSelectItem T="int" Value="articl.Id">@articl.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                @*<MudTextField Class="d-none" @bind-Value="Reclamation.ArticleId" For="@(() => Reclamation.ArticleId)" Immediate="true" Label="Id" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>*@
+                <MudTextField Class="d-none" @bind-Value="Reclamation.Id" For="@(() => Reclamation.Id)" Immediate="true" Label="Id" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+                <MudTextField @bind-Value="Reclamation.Name" Label="Name" Variant="Variant.Outlined" Margin="Margin.Normal"></MudTextField>
+                <MudTextField @bind-Value="Reclamation.Email" Label="Email" Variant="Variant.Outlined" Margin="Margin.Normal"></MudTextField>
+                <MudTextField @bind-Value="Reclamation.Description" Label="Description" Variant="Variant.Outlined" Margin="Margin.Normal"></MudTextField>
+
+            </MudCardContent>
+
+        </MudForm>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Annuler</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit">Sauvegarder Article</MudButton>
+
+
+    </DialogActions>
+</MudDialog>
+
+
+
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    MudForm form;
+    [Parameter]
+    public Reclamation Reclamation { get; set; }
+    [Parameter]
+    public List<Article> artciles { get; set; }
+    void Cancel() => MudDialog.Cancel();
+
+    public void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        await base.OnInitializedAsync();
+    }
+}

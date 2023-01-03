@@ -4,12 +4,12 @@
 <MudSnackbarProvider />
 <MudLayout>
     <MudAppBar>
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        @*<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />*@
         Réparations Electrique
     </MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen" >
+  @*  <MudDrawer @bind-Open="@_drawerOpen" >
         <NavMenu />
-    </MudDrawer>
+    </MudDrawer>*@
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Medium">
             @Body

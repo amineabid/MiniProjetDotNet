@@ -14,20 +14,36 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+//builder.Services.AddMassTransit(optinos => {
+//    //optinos.AddConsumer<ReclamationCreatedConsumer>();
+//    optinos.UsingRabbitMq((context, cnf) => {
+//        cnf.Host(new Uri("rabbitmq://localhost:4100"), h =>
+//        {
+//            h.Username("guest");
+//            h.Password("guest");
+//        });
+//        //cnf.ReceiveEndpoint("event-listener-reclamation", e =>
+//        //{
+//        //    e.ConfigureConsumer<ReclamationCreatedConsumer>(context);
+//        //});
+//    });
+//});
+
 builder.Services.AddMassTransit(optinos => {
-    optinos.AddConsumer<ReclamationCreatedConsumer>();
+    optinos.AddConsumer<ArticleCreatedConsumer>();
     optinos.UsingRabbitMq((context, cnf) => {
         cnf.Host(new Uri("rabbitmq://localhost:4100"), h =>
         {
             h.Username("guest");
             h.Password("guest");
         });
-        cnf.ReceiveEndpoint("event-listener", e =>
+        cnf.ReceiveEndpoint("event-listener-artcile", e =>
         {
-            e.ConfigureConsumer<ReclamationCreatedConsumer>(context);
+            e.ConfigureConsumer<ArticleCreatedConsumer>(context);
         });
     });
 });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

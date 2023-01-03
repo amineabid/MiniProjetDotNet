@@ -70,7 +70,31 @@
         }
       ],
       "UpstreamPathTemplate": "/apigateway/Reclamations/{id}",
-      "UpstreamHttpMethod": [ "Get", "Post" ]
+      "UpstreamHttpMethod": [ "Get", "Post", "Delete", "PUT" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/Reclamations",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7287
+        }
+      ],
+      "UpstreamPathTemplate": "/apigateway/ReclamationsIntervention",
+      "UpstreamHttpMethod": [ "GET", "PUT", "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/Reclamations/{id}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7287
+        }
+      ],
+      "UpstreamPathTemplate": "/apigateway/ReclamationsIntervention/{id}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Delete", "PUT" ]
     },
     {
       "DownstreamPathTemplate": "/api/Interventions",
@@ -94,7 +118,7 @@
         }
       ],
       "UpstreamPathTemplate": "/apigateway/Interventions/{id}",
-      "UpstreamHttpMethod": [ "Get", "Post" ]
+      "UpstreamHttpMethod": [ "Get", "Post", "Delete", "PUT" ]
     }
   ]
 }

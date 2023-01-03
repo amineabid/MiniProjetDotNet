@@ -29,7 +29,7 @@ namespace FrontEndMicroService.Client.API
             var response = await _httpClient.PostAsJsonAsync(GatewayApiGetURL, Intervention);
 
 
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)   
             {
                 return await response.Content.ReadFromJsonAsync<Intervention>();
             }
@@ -59,7 +59,7 @@ namespace FrontEndMicroService.Client.API
 
             if (response.IsSuccessStatusCode)
             {
-                return new Article { Id = id, Name = "" };
+                return new Intervention { Id = id, Description = "", garantie = false, ReclamationId = 0, Reclamation = null };
             }
             else
             {

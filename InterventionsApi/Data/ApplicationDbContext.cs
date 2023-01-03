@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿
 using Microsoft.EntityFrameworkCore;
 using InterventionsApi.Models;
 
@@ -14,7 +11,7 @@ namespace InterventionsApi.Data
         {
         }
         public DbSet<Reclamation> Reclamation { get; set; } = default!;
-
         public DbSet<Intervention> Intervention { get; set; } = default!;
+        public DbSet<Article> Article { get; set; } = default!;
     }
 }

@@ -25,7 +25,7 @@ namespace InterventionsApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Intervention>>> GetIntervention()
         {
-            return await _context.Intervention.ToListAsync();
+            return await _context.Intervention.Include(r=>r.Reclamation).ToListAsync();
         }
 
         // GET: api/Interventions/5
@@ -78,6 +78,7 @@ namespace InterventionsApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Intervention>> PostIntervention(Intervention intervention)
         {
+            intervention.Reclamation = null;
             _context.Intervention.Add(intervention);
             await _context.SaveChangesAsync();
 

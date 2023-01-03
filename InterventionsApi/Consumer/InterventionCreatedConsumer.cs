@@ -3,7 +3,7 @@ using InterventionsApi.Models;
 using MassTransit;
 using Shared;
 
-namespace ArticleApi.Consumer
+namespace InterventionsApi.Consumer
 {
     public class InterventionCreatedConsumer : IConsumer<InterventionCreated>
     {
