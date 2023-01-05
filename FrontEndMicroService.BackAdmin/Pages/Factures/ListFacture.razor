@@ -1,0 +1,206 @@
+﻿@page "/factures"
+@inject IFacturesService api
+@inject IDialogService DialogService
+@inject ISnackbar snackBar
+
+    <MudTable 
+        ServerData="@(new Func<TableState, Task<TableData<Facture>>>(ServerReload))"
+          FixedHeader="true"
+          Elevation="25"
+          MultiSelection="false"
+          @ref="table"
+            @bind-customer="facture"
+          SortLabel="Sort By"
+          Height="@("400px")"
+        >
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Factures</MudText>
+         @*   <MudSpacer />
+            <MudButton 
+                Variant="Variant.Filled" 
+                Disabled="false" 
+                Color="Color.Primary"
+                OnClick="@((e) => Save())">
+                Ajouter Facture
+            </MudButton>*@
+            <MudSpacer />
+            <MudTextField T="string" ValueChanged="@(s=>OnSearchValue(s))" Placeholder="Recherche Articles..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+
+        </ToolBarContent>
+        <ColGroup>
+
+            <col style="width: 5%;" />
+            <col style="width: 20%;" />
+            <col style="width: 35%;" />
+            <col style="width: 20%;" />
+            <col style="width: 20%;" />
+        </ColGroup>
+  <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<Facture, object>(x=>x.Id)">Numero</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Facture, object>(x=>x.Intervention.Reclamation.Name)">Nom</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Facture, object>(x=>x.LigneFactures)">Piéces</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Facture, object>(x=>x.LigneFactures)">Montant</MudTableSortLabel></MudTh>
+            <MudTh></MudTh>
+
+
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nr">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Intervention.Reclamation.Name</MudTd>
+        <MudTd DataLabel="Name">
+            @((MarkupString)String.Join("<br />", context.LigneFactures.Select(a => a.Piece.Name + " Prix : " + a.Prix + " Dt"))) 
+            </MudTd>
+        <MudTd DataLabel="Name">@context.LigneFactures.Sum(a=>a.Prix * a.Qte) </MudTd>
+        <MudTd DataLabel="">
+            <MudFab Disabled="false" @onclick="@((e)=>Edit(@context.Id))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
+            <MudFab @onclick="@((e)=>Delete(@context.Id))" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+            @*<MudFab @onclick="@((e)=>ShowPiee(@context.Id))" Color="Color.Error" Icon="@Icons.Filled.FormatListBulleted" Size="Size.Small" IconSize="Size.Small" />*@
+        </MudTd>
+
+        </RowTemplate>
+    </MudTable>
+
+
+
+@code {
+    private List<Facture> lsFactures = new List<Facture>();
+    DialogOptions maxWidth = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private MudTable<Facture> table;
+
+    private bool showDialog = false;
+    private bool _hidePosition;
+    private bool _loading;
+    private string searchString1 = "";
+    int totalItems = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        //lsArticle = await api.GetAll();
+        //if (lsArticle == null)
+        //{
+        //    //erreur
+        //    lsArticle = new List<Article>();
+        //}
+    }
+    private async Task<TableData<Facture>> ServerReload(TableState state)
+    {
+        lsFactures = await api.GetAll();
+        //await Task.Delay(300);
+        FilterCustmers();
+        totalItems = lsFactures.Count();
+        
+        //clients = clients.Skip(state.Page * state.PageSize).Take(state.PageSize).ToList();
+        return new TableData<Facture>() { TotalItems = totalItems, Items = lsFactures };
+    }
+    private async void FilterCustmers()
+    {
+        if (!string.IsNullOrWhiteSpace(searchString1))
+        {
+            lsFactures = lsFactures.AsParallel().Where(a =>
+                   (a.Intervention.Reclamation != null ? a.Intervention.Reclamation.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+                || (a.Id != 0 ? a.Id.ToString().Contains(searchString1, StringComparison.OrdinalIgnoreCase) : false)
+            ).ToList();
+        }
+
+
+
+    }
+
+    private void OnSearchValue(string text)
+    {
+        searchString1 = text;
+        table.ReloadServerData();
+    }
+
+    Facture facture = new Facture();
+    private async void Save()
+    {
+        var parameters = new DialogParameters();
+
+        facture = new Facture();
+        parameters.Add("facture", facture);
+        var dialog = DialogService.Show<CreateFacture>("Ajouter Facture", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (facture.LigneFactures.Count()==0)
+            {
+                snackBar.Add("Les champs sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await api.Create(facture);
+                facture = new Facture();
+                snackBar.Add("Facture Ajoutée.", Severity.Success);
+                await table.ReloadServerData();
+
+            }
+
+            StateHasChanged();
+        }
+
+    }
+
+    private async void Edit(int id)
+    {
+        facture = lsFactures.FirstOrDefault(c => c.Id == id);
+        var parameters = new DialogParameters();
+
+
+        parameters.Add("facture", facture);
+        var dialog = DialogService.Show<CreateFacture>("Modifier Facture", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (facture.Id == 0 || facture.LigneFactures.Count() == 0)
+            {
+                snackBar.Add("Les champs sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await api.Edit(facture);
+                facture = new Facture();
+                snackBar.Add("Facture Modifé.", Severity.Success);
+                await table.ReloadServerData();
+            }
+
+            StateHasChanged();
+        }
+    }
+    private async void ShowPiee(int id)
+    {
+        facture = lsFactures.FirstOrDefault(c => c.Id == id);
+        var parameters = new DialogParameters();
+
+
+        parameters.Add("FactureId", facture.Id);
+        //var dialog = DialogService.Show<ListPiece>("Liste Piece de l'article " + facture.Intervention.Reclamation.Name, parameters, maxWidth);
+        //var result = await dialog.Result;
+        //if (!result.Cancelled)
+        //{
+            
+        //}
+    }
+    private async void Delete(int id)
+    {
+
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Supprimer facture",
+            yesText: "Supprimer!", cancelText: "Annuler");
+        if (result == null)
+        {
+            snackBar.Add("Annulée " + "La Supprission d'une facture .", Severity.Warning);
+        }
+        else
+        {
+            await api.Delete(id);
+            snackBar.Add("Facture Supprimée.", Severity.Success);
+
+        }
+        await table.ReloadServerData();
+        StateHasChanged();
+
+    }
+
+
+}

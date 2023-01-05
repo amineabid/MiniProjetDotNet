@@ -119,6 +119,30 @@
       ],
       "UpstreamPathTemplate": "/apigateway/Interventions/{id}",
       "UpstreamHttpMethod": [ "Get", "Post", "Delete", "PUT" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/Factures",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/apigateway/Factures",
+      "UpstreamHttpMethod": [ "GET", "PUT", "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/Factures/{id}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/apigateway/Factures/{id}",
+      "UpstreamHttpMethod": [ "Get", "Post", "Delete", "PUT" ]
     }
   ]
 }

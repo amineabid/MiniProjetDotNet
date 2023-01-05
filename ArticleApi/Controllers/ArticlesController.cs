@@ -66,6 +66,12 @@ namespace ArticleApi.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                await _publishEndPoint.Publish<ArticleCreated>(new ArticleCreated
+                {
+                    action = "Put",
+                    Id = article.Id,
+                    Name = article.Name,
+                });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -91,6 +97,7 @@ namespace ArticleApi.Controllers
             await _context.SaveChangesAsync();
             await _publishEndPoint.Publish<ArticleCreated>(new ArticleCreated
             {
+                action = "Add",
                 Id = article.Id,
                 Name = article.Name,
             });
@@ -109,7 +116,12 @@ namespace ArticleApi.Controllers
 
             _context.Article.Remove(article);
             await _context.SaveChangesAsync();
-
+            await _publishEndPoint.Publish<ArticleCreated>(new ArticleCreated
+            {
+                action = "Delete",
+                Id = article.Id,
+                Name = article.Name,
+            });
             return NoContent();
         }
 

@@ -60,6 +60,15 @@ namespace ReclameClientApi.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                await _publishEndPoint.Publish<ReclamationCreated>(new ReclamationCreated
+                {
+                    action = "Put",
+                    Id = reclamation.Id,
+                    Name = reclamation.Name,
+                    Description = reclamation.Description,
+                    ArticleId = reclamation.ArticleId,
+                    Email = reclamation.Email,
+                });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -85,6 +94,7 @@ namespace ReclameClientApi.Controllers
             await _context.SaveChangesAsync();
             await _publishEndPoint.Publish<ReclamationCreated>(new ReclamationCreated
             {
+                action = "Add",
                 Id = reclamation.Id,
                 Name = reclamation.Name,
                 Description = reclamation.Description,
@@ -106,7 +116,15 @@ namespace ReclameClientApi.Controllers
 
             _context.Reclamation.Remove(reclamation);
             await _context.SaveChangesAsync();
-
+            await _publishEndPoint.Publish<ReclamationCreated>(new ReclamationCreated
+            {
+                action = "Delete",
+                Id = reclamation.Id,
+                Name = reclamation.Name,
+                Description = reclamation.Description,
+                ArticleId = reclamation.ArticleId,
+                Email = reclamation.Email,
+            });
             return NoContent();
         }
 

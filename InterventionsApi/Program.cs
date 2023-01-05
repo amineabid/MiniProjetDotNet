@@ -23,11 +23,11 @@ builder.Services.AddMassTransit(optinos => {
             h.Username("guest");
             h.Password("guest");
         });
-        cnf.ReceiveEndpoint("event-listener-reclamation", e =>
+        cnf.ReceiveEndpoint("event-listener-reclamationintervention", e =>
         {
             e.ConfigureConsumer<ReclamationCreatedConsumer>(context);
         });
-        cnf.ReceiveEndpoint("event-listener-artcilee", e =>
+        cnf.ReceiveEndpoint("event-listener-artcileintervention", e =>
         {
             e.ConfigureConsumer<ArticleCreatedConsumer>(context);
         });

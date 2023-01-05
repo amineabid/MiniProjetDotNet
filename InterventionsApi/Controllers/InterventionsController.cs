@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using InterventionsApi.Data;
 using InterventionsApi.Models;
+using Shared;
+using MassTransit;
 
 namespace InterventionsApi.Controllers
 {
@@ -15,10 +17,11 @@ namespace InterventionsApi.Controllers
     public class InterventionsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
-        public InterventionsController(ApplicationDbContext context)
+        private readonly IPublishEndpoint _publishEndPoint;
+        public InterventionsController(ApplicationDbContext context, IPublishEndpoint publishEndPoint)
         {
             _context = context;
+            _publishEndPoint = publishEndPoint;
         }
 
         // GET: api/Interventions
@@ -57,6 +60,14 @@ namespace InterventionsApi.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                await _publishEndPoint.Publish<InterventionCreated>(new InterventionCreated
+                {
+                    action = "Put",
+                    Id = intervention.Id,
+                    Description = intervention.Description,
+                    ReclamationId = intervention.ReclamationId,
+                    garnatie = intervention.garantie
+                });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -81,7 +92,14 @@ namespace InterventionsApi.Controllers
             intervention.Reclamation = null;
             _context.Intervention.Add(intervention);
             await _context.SaveChangesAsync();
-
+            await _publishEndPoint.Publish<InterventionCreated>(new InterventionCreated
+            {
+                action = "Add",
+                Id = intervention.Id,
+                Description = intervention.Description,
+                ReclamationId = intervention.ReclamationId,
+                garnatie = intervention.garantie
+            });
             return CreatedAtAction("GetIntervention", new { id = intervention.Id }, intervention);
         }
 
@@ -97,7 +115,14 @@ namespace InterventionsApi.Controllers
 
             _context.Intervention.Remove(intervention);
             await _context.SaveChangesAsync();
-
+            await _publishEndPoint.Publish<InterventionCreated>(new InterventionCreated
+            {
+                action = "Delete",
+                Id = intervention.Id,
+                Description = intervention.Description,
+                ReclamationId = intervention.ReclamationId,
+                garnatie = intervention.garantie
+            });
             return NoContent();
         }
 

@@ -1,0 +1,164 @@
+﻿@inject IArticlesService api
+
+<MudDialog>
+    <DialogContent>
+        <MudForm Model="@facture" @ref="@form" ValidationDelay="0">
+            <MudCardContent Class="pa-0">
+                <MudTextField Class="d-none" @bind-Value="facture.Id" For="@(() => facture.Id)" Immediate="true" Label="Id" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+                <MudTextField Class="d-none" @bind-Value="facture.InterventionId" For="@(() => facture.InterventionId)" Immediate="true" Label="Id" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+                <MudTable ServerData="@(new Func<TableState, Task<TableData<LigneFacture>>>(ServerReload))"
+                          Dense="true" 
+                          FixedHeader="true"
+                          Elevation="25"
+                          MultiSelection="false"
+                          @ref="table"
+                          @bind-customer="lignefacture"
+                          SortLabel="Sort By"
+                          Height="@("300px")"
+                          Hover="true">
+                    <ToolBarContent>
+                        <MudSelect T="Piece" @bind-Value="piece" For="@(() => piece)" Required="true" Label="Nom Piéce" AnchorOrigin="Origin.BottomCenter">
+                            @if (pieces != null)
+                            {
+                                foreach (var pis in pieces)
+                                {
+                                    <MudSelectItem Value="pis">@pis.Name =>  @pis.price</MudSelectItem>
+                                }
+                            }
+                        </MudSelect>
+                        <MudFab @onclick="@((e)=>AddLigneFacture(facture.Id))" Color="Color.Success" Icon="@Icons.Material.Filled.AddCircle" Size="Size.Small" IconSize="Size.Small" />
+                        @*<br><MudTextField T="string" ValueChanged="@(s=>FilterDocs(s))" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>*@                    
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>N </MudTh>
+                        <MudTh>Piece</MudTh>
+                        <MudTh>Prix</MudTh>
+                        <MudTh>Qte</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="N">
+                            @(context.id)
+                        </MudTd>
+                        <MudTd DataLabel="Piece ">
+                            @(context.Piece.Name)
+                        </MudTd>
+                        <MudTd DataLabel="Prix ">
+                            <MudNumericField Immediate="false" Format="N2" T="double" HelperText="@(context.Prix.ToString())" @bind-Value="context.Prix" Label="Prix" Variant="Variant.Outlined" Margin="Margin.Normal"></MudNumericField>
+                        </MudTd>
+                        <MudTd DataLabel="Qte ">
+                            <MudNumericField Immediate="false"  T="int" HelperText="@(context.Qte.ToString())" @bind-Value="context.Qte" Label="Qte" Variant="Variant.Outlined" Margin="Margin.Normal"></MudNumericField>
+                        </MudTd>
+                        <MudTd>
+                            <MudFab @onclick="@((e)=>Delete(lsLigneFactures.IndexOf(context)))" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                    </PagerContent>
+                    <NoRecordsContent>
+                        <MudText>No matching records found</MudText>
+                    </NoRecordsContent>
+                    <LoadingContent>
+                        <MudText>Loading...</MudText>
+                    </LoadingContent>
+                    <PagerContent>
+                        <MudTablePager />
+                    </PagerContent>
+                </MudTable>
+
+            </MudCardContent>
+
+        </MudForm>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Annuler</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="Submit">Sauvegarder</MudButton>
+
+
+    </DialogActions>
+</MudDialog>
+
+
+
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    MudForm form;
+    [Parameter]
+    public Facture facture { get; set; }
+    public LigneFacture lignefacture { get; set; }
+    public List<Piece> pieces { get; set; }
+    public List<LigneFacture> lsLigneFactures = new List<LigneFacture>();
+    public Piece piece = new Piece();
+    private string searchString = "";
+    private MudTable<LigneFacture> table;
+    void Cancel() => MudDialog.Cancel();
+    private int totalItems;
+
+
+    public void Submit()
+    {
+        foreach (var item in lsLigneFactures)
+        {
+            item.Piece = null;
+            item.Facture = null;
+        }
+        facture.LigneFactures = lsLigneFactures;
+        //notif.SeenUsers = optionsUsers.ToList();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    public bool Loading = false;
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Loading = true;
+
+        List<Article> lsArticles  = await api.GetAll();
+        List<Piece> lsPiece = new List<Piece>();
+        foreach(var l in lsArticles){
+            var pss = await api.GetPiecesArtciles(l.Id);
+            lsPiece.AddRange(pss);
+        }
+        pieces = lsPiece;
+        
+        lsLigneFactures= facture.LigneFactures;
+    }
+    private IEnumerable<LigneFacture> pagedData;
+
+
+    private async Task<TableData<LigneFacture>> ServerReload(TableState state)
+    {
+
+        totalItems = lsLigneFactures.Count();
+
+        pagedData = lsLigneFactures.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new TableData<LigneFacture>() { TotalItems = totalItems, Items = pagedData };
+    }
+    private void FilterDocs(string text)
+    {
+        searchString = text;
+        table.ReloadServerData();
+    }
+    private void AddLigneFacture(int idFacture)
+    {
+        piece = pieces.FirstOrDefault(a=>a.Id==piece.Id);
+        LigneFacture lf = new LigneFacture();
+        lf.FactureId = idFacture;
+        lf.id = 0;
+        lf.Qte = 1;
+        lf.Piece = piece;
+        lf.PieceId = piece.Id;
+        lf.Prix = piece.price;
+        lsLigneFactures.Add(lf);
+        table.ReloadServerData();
+    }
+    private void Delete(int indexLigneFacture)
+    {
+        lsLigneFactures.RemoveAt(indexLigneFacture);
+        table.ReloadServerData();
+    }
+
+
+}

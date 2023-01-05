@@ -1,5 +1,7 @@
 ﻿@page "/interventions"
+@using FrontEndMicroService.BackAdmin.Pages.Factures
 @inject IInterventionsService api
+@inject IFacturesService apiFacture
 @inject IDialogService DialogService
 @inject ISnackbar snackBar
 
@@ -55,6 +57,7 @@
                 <MudFab Disabled="false" @onclick="@((e)=>Edit(@context.Id))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
                 <MudFab @onclick="@((e)=>Delete(@context.Id))" Color="Color.Error" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
                 <MudFab @onclick="@((e)=>ShowReclamation(@context.Id))" Color="Color.Error" Icon="@Icons.Filled.FormatListBulleted" Size="Size.Small" IconSize="Size.Small" />
+                <MudFab @onclick="@((e)=>CreateFacture(@context.Id))" Color="Color.Error" Icon="@Icons.Filled.Create" Size="Size.Small" IconSize="Size.Small" />
             </MudTd>
 
         </RowTemplate>
@@ -87,7 +90,7 @@
         //await Task.Delay(300);
         FilterCustmers();
         totalItems = lsIntervention.Count();
-        
+
         //clients = clients.Skip(state.Page * state.PageSize).Take(state.PageSize).ToList();
         return new TableData<Intervention>() { TotalItems = totalItems, Items = lsIntervention };
     }
@@ -177,8 +180,36 @@
         //var result = await dialog.Result;
         //if (!result.Cancelled)
         //{
-            
+
         //}
+    }
+    private async void CreateFacture(int id)
+    {
+        var parameters = new DialogParameters();
+
+        Facture facture = new Facture();
+        facture.LigneFactures = new List<LigneFacture>();
+        facture.InterventionId = id;
+        parameters.Add("facture", facture);
+        var dialog = DialogService.Show<CreateFacture>("Ajouter Facture", parameters, maxWidth);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            if (facture.LigneFactures.Count() == 0)
+            {
+                snackBar.Add("Les champs sont obligatoires.", Severity.Error);
+            }
+            else
+            {
+                await apiFacture.Create(facture);
+                facture = new Facture();
+                snackBar.Add("Facture Ajoutée.", Severity.Success);
+                await table.ReloadServerData();
+
+            }
+
+            StateHasChanged();
+        }
     }
     private async void Delete(int id)
     {

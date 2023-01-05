@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ArticleApi.Data;
 using ArticleApi.Models;
+using MassTransit;
+using Shared;
 
 namespace ArticleApi.Controllers
 {
@@ -15,10 +17,11 @@ namespace ArticleApi.Controllers
     public class PiecesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
-        public PiecesController(ApplicationDbContext context)
+        private readonly IPublishEndpoint _publishEndPoint;
+        public PiecesController(ApplicationDbContext context, IPublishEndpoint publishEndPoint)
         {
             _context = context;
+            _publishEndPoint = publishEndPoint;
         }
 
         // GET: api/Pieces
@@ -57,6 +60,12 @@ namespace ArticleApi.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                await _publishEndPoint.Publish<PieceCreated>(new PieceCreated
+                {
+                    action = "Put",
+                    Id = piece.Id,
+                    Name = piece.Name,
+                });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -80,7 +89,12 @@ namespace ArticleApi.Controllers
         {
             _context.Piece.Add(piece);
             await _context.SaveChangesAsync();
-
+            await _publishEndPoint.Publish<PieceCreated>(new PieceCreated
+            {
+                action = "Add",
+                Id = piece.Id,
+                Name = piece.Name,
+            });
             return CreatedAtAction("GetPiece", new { id = piece.Id }, piece);
         }
 
@@ -96,7 +110,12 @@ namespace ArticleApi.Controllers
 
             _context.Piece.Remove(piece);
             await _context.SaveChangesAsync();
-
+            await _publishEndPoint.Publish<PieceCreated>(new PieceCreated
+            {
+                action = "Delete",
+                Id = piece.Id,
+                Name = piece.Name,
+            });
             return NoContent();
         }
 

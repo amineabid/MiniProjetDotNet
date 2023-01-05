@@ -11,6 +11,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<IArticlesService, ArticlesService>();
 builder.Services.AddScoped<IReclamationsService, ReclamationsService>();
 builder.Services.AddScoped<IInterventionsService, InterventionsService>();
+builder.Services.AddScoped<IFacturesService, FacturesService>();
 
 builder.Services.AddMudServices();
 
