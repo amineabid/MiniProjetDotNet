@@ -1,0 +1,88 @@
+version: '3.4'
+
+services:
+  articleapi:
+    image: ${DOCKER_REGISTRY-}articleapi
+    build:
+      context: .
+      dockerfile: ArticleApi/Dockerfile
+
+  frontendmicroservice.client:
+    image: ${DOCKER_REGISTRY-}frontendmicroserviceclient
+    build:
+      context: .
+      dockerfile: FrontEndMicroService/Client/Dockerfile
+
+
+  gatewayapi:
+    image: ${DOCKER_REGISTRY-}gatewayapi
+    build:
+      context: .
+      dockerfile: GatewayApi/Dockerfile
+
+
+  interventionsapi:
+    image: ${DOCKER_REGISTRY-}interventionsapi
+    build:
+      context: .
+      dockerfile: InterventionsApi/Dockerfile
+
+
+  reclameclientapi:
+    image: ${DOCKER_REGISTRY-}reclameclientapi
+    build:
+      context: .
+      dockerfile: ReclameCLientApi/Dockerfile
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "password@12345#"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "18001:1433"
+    networks:
+      - backend
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: 'rabbitmq'
+    ports:
+      - 4100:5672
+      - 15672:15672
+    volumes: 
+      - rabbitmq:/var/lib/rabbitmq/mnesia
+    networks:
+        - rabbitmq_go_net
+
+  frontendmicroservice.backadmin:
+    image: ${DOCKER_REGISTRY-}frontendmicroservicebackadmin
+    build:
+      context: .
+      dockerfile: FrontEndMicroService.BackAdmin/Dockerfile
+
+  facturesapi:
+    image: ${DOCKER_REGISTRY-}facturesapi
+    build:
+      context: .
+      dockerfile: FacturesApi/Dockerfile
+    
+
+volumes:
+  rabbitmq:
+    driver: local
+
+#Docker Networks
+networks:
+  backend:
+  rabbitmq_go_net:
+    driver: bridge
+  mynet:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+    ipam:
+      driver: default
+      config:
+          - subnet: 172.16.236.0/24
+          - subnet: "2001:3984:3986::/64"
